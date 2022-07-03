@@ -27,11 +27,8 @@ DISCONNECT_MESSAGE = '!DISCONNECT'
 SERVER = '192.168.0.16'
 ADDR = (SERVER, PORT)
 
-client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-client.connect(ADDR)
 
-
-def send_str(msg):
+def send_str(client, msg):
     message = msg.encode(FORMAT)
     msg_length = len(message)
     send_length = str(msg_length).encode(FORMAT)
@@ -46,5 +43,8 @@ while True:
     for event in event_list:
         if event.type == pg.QUIT:
             sys.exit()
+
+    client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    client.connect(ADDR)
 
     screen.fill(black)
