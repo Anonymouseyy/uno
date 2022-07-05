@@ -14,6 +14,25 @@ server.bind(ADDR)
 game_start = False
 current_player = 0
 
+# Generate Uno Deck
+colors = ['r', 'g', 'b', 'y']
+actions = ['s', 'r', 'd2']
+uno_deck = ['w', 'w', 'w', 'w', 'w4', 'w4', 'w4', 'w4']
+for color in colors:
+    for i in range(10):
+        if i == 0:
+            uno_deck.append(f'{color}0')
+        else:
+            uno_deck.append(f'{color}{i}')
+            uno_deck.append(f'{color}{i}')
+
+    for j in actions:
+        uno_deck.append(f'{color}{j}')
+        uno_deck.append(f'{color}{j}')
+
+print(uno_deck)
+print(len(uno_deck))
+
 
 def handle_client(conn, addr, player):
     print(f'[NEW CONNECTION] {addr} connected.')
