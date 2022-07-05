@@ -29,9 +29,8 @@ for color in colors:
     for j in actions:
         uno_deck.append(f'{color}{j}')
         uno_deck.append(f'{color}{j}')
-
-print(uno_deck)
-print(len(uno_deck))
+hands = []
+current_card = None
 
 
 def handle_client(conn, addr, player):

@@ -1,6 +1,6 @@
 import time
 import pygame as pg
-import socket, sys, random
+import socket, sys, threading
 
 pg.init()
 size = width, height = 700, 600
@@ -78,8 +78,13 @@ while True:
             mouse = pg.mouse.get_pos()
             if play_button.collidepoint(mouse):
                 time.sleep(0.2)
-                client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                client.connect(ADDR)
+                try:
+                    client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                    client.connect(ADDR)
+                except:
+                    print('Connection Failed')
                 game_started = True
+    if game_started:
+        pass
 
     pg.display.flip()
