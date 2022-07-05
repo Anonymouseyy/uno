@@ -59,10 +59,11 @@ def start():
         conn, addr = server.accept()
         thread = threading.Thread(target=handle_client, args=(conn, addr, current_player))
         thread.start()
-        print(f'[ACTIVE CONNECTIONS] {threading.activeCount() - 1}')
+        x = threading.activeCount() - 1
+        print(f'[ACTIVE CONNECTIONS] {x}')
         current_player += 1
 
-        if threading.activeCount() - 1 == 2:
+        if x == 2:
             game_start = True
 
     print(f'[Stopped Listening] Server has stopped listening on {SERVER}')
