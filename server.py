@@ -11,8 +11,11 @@ DISCONNECT_MESSAGE = '!DISCONNECT'
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server.bind(ADDR)
 
+game_start = False
+current_player = 0
 
-def handle_client(conn, addr):
+
+def handle_client(conn, addr, player):
     print(f'[NEW CONNECTION] {addr} connected.')
 
     connected = True
@@ -31,13 +34,20 @@ def handle_client(conn, addr):
 
 
 def start():
+    global game_start, current_player
     server.listen()
     print(f'[LISTENING] Server is listening on {SERVER}')
-    while True:
+    while not game_start:
         conn, addr = server.accept()
-        thread = threading.Thread(target=handle_client, args=(conn, addr))
+        thread = threading.Thread(target=handle_client, args=(conn, addr, current_player))
         thread.start()
         print(f'[ACTIVE CONNECTIONS] {threading.activeCount() - 1}')
+        current_player += 1
+
+        if threading.activeCount() - 1 == 2:
+            game_start = True
+
+    print(f'[Stopped Listening] Server has stopped listening on {SERVER}')
 
 
 print('[STARTING] server is starting...')
