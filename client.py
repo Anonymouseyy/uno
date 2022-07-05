@@ -48,6 +48,10 @@ def send_str(client, msg):
     print(client.recv(2048).decode(FORMAT))
 
 
+def draw_hand(cards):
+    pass
+
+
 while True:
     clock.tick(60)
     event_list = pg.event.get()
