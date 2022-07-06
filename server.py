@@ -77,9 +77,9 @@ def start():
     print(f'[LISTENING] Server is listening on {SERVER}')
     while not game_start:
         conn, addr = server.accept()
+        x = threading.activeCount() - 1
         thread = threading.Thread(target=handle_client, args=(conn, addr, current_player))
         thread.start()
-        x = threading.activeCount() - 1
         print(f'[ACTIVE CONNECTIONS] {x}')
         current_player += 1
 
@@ -87,6 +87,11 @@ def start():
             game_start = True
 
     print(f'[STOPPED LISTENING] Server has stopped listening on {SERVER}')
+    while True:
+        if threading.activeCount() - 1 != 2:
+            start()
+            current_player = 0
+            return
 
 
 print('[STARTING] server is starting...')
