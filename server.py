@@ -1,5 +1,4 @@
-import socket
-import threading
+import socket, threading, random, pickle
 
 HEADER = 64
 PORT = 5050
@@ -13,6 +12,8 @@ server.bind(ADDR)
 
 game_start = False
 current_player = 0
+max_players = 2
+starting_cards = 7
 
 # Generate Uno Deck
 colors = ['r', 'g', 'b', 'y']
@@ -30,24 +31,43 @@ for color in colors:
         uno_deck.append(f'{color}{j}')
         uno_deck.append(f'{color}{j}')
 hands = []
-current_card = None
+current_card = random.choice(uno_deck)
+uno_deck.remove(current_card)
+
+for i in range(max_players):
+    x = []
+    for j in range(starting_cards):
+        x.append(random.choice(uno_deck))
+        uno_deck.remove(x[j])
+    hands.append(x)
 
 
 def handle_client(conn, addr, player):
+    global current_card, hands
     print(f'[NEW CONNECTION] {addr} connected.')
-
+    conn.send(pickle.dumps([hands[player], len(hands[player-1]), current_card]))
     connected = True
     while connected:
-        msg_length = conn.recv(HEADER).decode(FORMAT)
-        if msg_length:
-            msg_length = int(msg_length)
-            msg = conn.recv(msg_length).decode(FORMAT)
-            if msg == DISCONNECT_MESSAGE:
-                connected = False
+        try:
+            data = pickle.loads(conn.recv(2048))
+            if data == DISCONNECT_MESSAGE:
+                break
+            hands[player], current_card = data
 
-            print(f'[{addr}] {msg}')
-            conn.send('Msg received'.encode(FORMAT))
+            if not data:
+                print("Disconnected")
+                break
+            else:
+                reply = [hands[player], len(hands[player-1]), current_card]
 
+                print("Received: ", data)
+                print("Sending : ", reply)
+
+            conn.sendall(pickle.dumps(reply))
+        except:
+            break
+
+    print(f'[CONNECTION LOST] Connection has been lost or terminated with {addr}')
     conn.close()
 
 
@@ -63,10 +83,10 @@ def start():
         print(f'[ACTIVE CONNECTIONS] {x}')
         current_player += 1
 
-        if x == 2:
+        if x == max_players:
             game_start = True
 
-    print(f'[Stopped Listening] Server has stopped listening on {SERVER}')
+    print(f'[STOPPED LISTENING] Server has stopped listening on {SERVER}')
 
 
 print('[STARTING] server is starting...')

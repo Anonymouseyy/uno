@@ -1,6 +1,6 @@
 import time
 import pygame as pg
-import socket, sys, threading
+import socket, sys, pickle
 
 pg.init()
 size = width, height = 700, 600
@@ -35,17 +35,8 @@ ADDR = (SERVER, PORT)
 
 game_started = False
 client = None
-i = 0
-
-
-def send_str(client, msg):
-    message = msg.encode(FORMAT)
-    msg_length = len(message)
-    send_length = str(msg_length).encode(FORMAT)
-    send_length += b' ' * (HEADER - len(send_length))
-    client.send(send_length)
-    client.send(message)
-    print(client.recv(2048).decode(FORMAT))
+current_card = None
+opponent_cards = None
 
 
 def draw_hand(cards):
@@ -68,12 +59,13 @@ def draw_hand(cards):
             color = yellow
 
 
-
 while True:
     clock.tick(60)
     event_list = pg.event.get()
     for event in event_list:
         if event.type == pg.QUIT:
+            if client:
+                client.send(pickle.dumps(DISCONNECT_MESSAGE))
             sys.exit()
 
     screen.fill(black)
@@ -102,10 +94,18 @@ while True:
                 try:
                     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                     client.connect(ADDR)
+                    hand, opponent_cards, current_card = pickle.loads(client.recv(2048))
+                    print(hand, opponent_cards, current_card)
                 except:
                     print('Connection Failed')
+                    sys.exit()
                 game_started = True
     if game_started:
         pass
+        try:
+            client.send(pickle.dumps([hand, current_card]))
+            hand, opponent_cards, current_card = pickle.loads(client.recv(2048))
+        except socket.error as e:
+            print(e)
 
     pg.display.flip()
