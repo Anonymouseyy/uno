@@ -14,6 +14,7 @@ game_start = False
 current_player = 0
 max_players = 2
 starting_cards = 7
+turn = 0
 
 # Generate Uno Deck
 colors = ['r', 'g', 'b', 'y']
@@ -43,22 +44,29 @@ for i in range(max_players):
 
 
 def handle_client(conn, addr, player):
-    global current_card, hands
+    global current_card, hands, turn
     print(f'[NEW CONNECTION] {addr} connected.')
-    conn.send(pickle.dumps([hands[player], len(hands[player-1]), current_card]))
+    conn.send(pickle.dumps([hands[player], len(hands[player-1]), current_card, player]))
     connected = True
     while connected:
         try:
             data = pickle.loads(conn.recv(2048))
             if data == DISCONNECT_MESSAGE:
                 break
-            hands[player], current_card = data
+            elif data == 'GETDATA':
+                pass
+            else:
+                hands[player], current_card = data
+                if turn == 0:
+                    turn = 1
+                else:
+                    turn = 0
 
             if not data:
                 print("Disconnected")
                 break
             else:
-                reply = [hands[player], len(hands[player-1]), current_card]
+                reply = [hands[player], len(hands[player-1]), current_card, turn]
 
                 print("Received: ", data)
                 print("Sending : ", reply)

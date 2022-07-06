@@ -3,7 +3,7 @@ import pygame as pg
 import socket, sys, pickle
 
 pg.init()
-size = width, height = 700, 600
+size = width, height = 1120, 630
 clock = pg.time.Clock()
 text_clock = pg.time.Clock()
 
@@ -37,16 +37,22 @@ game_started = False
 client = None
 current_card = None
 opponent_cards = None
+player_number = None
+turn = 0
 
 
 def draw_hand(cards):
+    global screen
     rect_list = []
-    w = 50
-    h = 75
-    for card in cards:
-        x = pg.Rect(0, 0, w, h)
-        x.center = 0, 0
-        rect_list.append(x)
+    ratio = 1.59
+    max_w = 100
+
+    if width/len(cards) >= max_w:
+        w = max_w
+    else:
+        w = width/len(cards)
+
+    for i, card in enumerate(cards):
         if card[0] == "w":
             color = black
         elif card[0] == "r":
@@ -57,6 +63,30 @@ def draw_hand(cards):
             color = green
         elif card[0] == "y":
             color = yellow
+
+        if color == black:
+            if len(card) == 1:
+                text = mediumFont.render('W', True, white)
+            else: text = mediumFont.render(f'{card[1:].capitalize()}', True, white)
+            x = pg.Rect(0, 0, w-5, w * ratio-5)
+        else:
+            text = mediumFont.render(f'{card[1:].capitalize()}', True, black)
+            x = pg.Rect(0, 0, w, w * ratio)
+
+        text_rect = text.get_rect()
+        x.center = (i*w)+w//2+5, 550
+        text_rect.center = x.center
+        if color == black:
+            y = pg.Rect(0, 0, w, w*ratio)
+            y.center = x.center
+            pg.draw.rect(screen, white, y)
+
+        pg.draw.rect(screen, color, x)
+        screen.blit(text, text_rect)
+
+        rect_list.append(x)
+
+    return rect_list
 
 
 while True:
@@ -94,18 +124,31 @@ while True:
                 try:
                     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                     client.connect(ADDR)
-                    hand, opponent_cards, current_card = pickle.loads(client.recv(2048))
+                    hand, opponent_cards, current_card, player_number = pickle.loads(client.recv(2048))
                     print(hand, opponent_cards, current_card)
                 except:
                     print('Connection Failed')
                     sys.exit()
                 game_started = True
     if game_started:
-        pass
         try:
-            client.send(pickle.dumps([hand, current_card]))
-            hand, opponent_cards, current_card = pickle.loads(client.recv(2048))
+            client.send(pickle.dumps('GETDATA'))
+            hand, opponent_cards, current_card, turn = pickle.loads(client.recv(2048))
         except socket.error as e:
             print(e)
+
+        card_rects = draw_hand(hand)
+
+        if turn == player_number:
+            click, _, _ = pg.mouse.get_pressed()
+            if click == 1:
+                mouse = pg.mouse.get_pos()
+                for i in card_rects:
+                    if i.collidepoint(mouse):
+                        try:
+                            client.send(pickle.dumps([hand, current_card]))
+                            hand, opponent_cards, current_card, turn = pickle.loads(client.recv(2048))
+                        except socket.error as e:
+                            print(e)
 
     pg.display.flip()
