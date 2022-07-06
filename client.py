@@ -49,7 +49,24 @@ def send_str(client, msg):
 
 
 def draw_hand(cards):
-    pass
+    rect_list = []
+    w = 50
+    h = 75
+    for card in cards:
+        x = pg.Rect(0, 0, w, h)
+        x.center = 0, 0
+        rect_list.append(x)
+        if card[0] == "w":
+            color = black
+        elif card[0] == "r":
+            color = red
+        elif card[0] == "b":
+            color = blue
+        elif card[0] == "g":
+            color = green
+        elif card[0] == "y":
+            color = yellow
+
 
 
 while True:
