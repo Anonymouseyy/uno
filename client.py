@@ -74,7 +74,7 @@ def draw_hand(cards):
             x = pg.Rect(0, 0, w, w * ratio)
 
         text_rect = text.get_rect()
-        x.center = (i*w)+w//2+5, 550
+        x.center = (i*(w+5))+w//2+5, 550
         text_rect.center = x.center
         if color == black:
             y = pg.Rect(0, 0, w, w*ratio)
@@ -87,6 +87,68 @@ def draw_hand(cards):
         rect_list.append(x)
 
     return rect_list
+
+
+def draw_current_card(card):
+    global screen
+
+    if card[0] == "w":
+        color = black
+    elif card[0] == "r":
+        color = red
+    elif card[0] == "b":
+        color = blue
+    elif card[0] == "g":
+        color = green
+    elif card[0] == "y":
+        color = yellow
+
+    if color == black:
+        if len(card) == 1:
+            text = mediumFont.render('W', True, white)
+        else:
+            text = mediumFont.render(f'{card[1:].capitalize()}', True, white)
+        x = pg.Rect(0, 0, 145, 233.5)
+    else:
+        text = mediumFont.render(f'{card[1:].capitalize()}', True, black)
+        x = pg.Rect(0, 0, 150, 238.5)
+
+    text_rect = text.get_rect()
+    x.center = width//2, height//2
+    text_rect.center = x.center
+    if color == black:
+        y = pg.Rect(0, 0, 150, 238.5)
+        y.center = x.center
+        pg.draw.rect(screen, white, y)
+
+    pg.draw.rect(screen, color, x)
+    screen.blit(text, text_rect)
+
+
+def draw_opponent_hand(hand):
+    global screen
+    ratio = 1.59
+    max_w = 100
+
+    if width/hand >= max_w:
+        w = max_w
+    else:
+        w = width/hand
+
+    for i in range(hand):
+        x = pg.Rect(0, 0, w-5, w*ratio-5)
+        text = mediumFont.render('UNO', True, white)
+
+        text_rect = text.get_rect()
+        x.center = width-((i * (w + 5)) + w // 2 + 5), 80
+        text_rect.center = x.center
+
+        y = pg.Rect(0, 0, w, w*ratio)
+        y.center = x.center
+
+        pg.draw.rect(screen, white, y)
+        pg.draw.rect(screen, black, x)
+        screen.blit(text, text_rect)
 
 
 while True:
@@ -138,14 +200,18 @@ while True:
             print(e)
 
         card_rects = draw_hand(hand)
+        draw_current_card(current_card)
+        draw_opponent_hand(opponent_cards)
 
         if turn == player_number:
             click, _, _ = pg.mouse.get_pressed()
             if click == 1:
                 mouse = pg.mouse.get_pos()
-                for i in card_rects:
+                for count, i in enumerate(card_rects):
                     if i.collidepoint(mouse):
                         try:
+                            current_card = hand[count]
+                            hand.remove(hand[count])
                             client.send(pickle.dumps([hand, current_card]))
                             hand, opponent_cards, current_card, turn = pickle.loads(client.recv(2048))
                         except socket.error as e:

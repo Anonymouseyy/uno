@@ -32,8 +32,14 @@ for color in colors:
         uno_deck.append(f'{color}{j}')
         uno_deck.append(f'{color}{j}')
 hands = []
-current_card = random.choice(uno_deck)
-uno_deck.remove(current_card)
+current_card = None
+
+while True:
+    current_card = random.choice(uno_deck)
+
+    if not current_card[0] == 'w' and current_card[1].isnumeric():
+        uno_deck.remove(current_card)
+        break
 
 for i in range(max_players):
     x = []
@@ -56,6 +62,7 @@ def handle_client(conn, addr, player):
             elif data == 'GETDATA':
                 pass
             else:
+                uno_deck.append(current_card)
                 hands[player], current_card = data
                 if turn == 0:
                     turn = 1
