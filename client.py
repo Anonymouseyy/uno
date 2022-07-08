@@ -92,19 +92,17 @@ def draw_hand(cards):
 def draw_current_card(card):
     global screen
 
-    if card[0] == "w":
-        color = black
-    elif card[0] == "r":
+    if card[0] == "r" or card[:2] == "wr":
         color = red
-    elif card[0] == "b":
+    elif card[0] == "b" or card[:2] == "wb":
         color = blue
-    elif card[0] == "g":
+    elif card[0] == "g" or card[:2] == "wg":
         color = green
-    elif card[0] == "y":
+    elif card[0] == "y" or card[:2] == "wy":
         color = yellow
 
-    if color == black:
-        if len(card) == 1:
+    if card[0] == 'w':
+        if len(card) == 2:
             text = mediumFont.render('W', True, white)
         else:
             text = mediumFont.render(f'{card[1:].capitalize()}', True, white)
@@ -149,6 +147,72 @@ def draw_opponent_hand(hand):
         pg.draw.rect(screen, white, y)
         pg.draw.rect(screen, black, x)
         screen.blit(text, text_rect)
+
+
+def is_valid_move(card, current_card):
+    if card[0] == 'w':
+        return True
+    elif card[0] == current_card[0]:
+        return True
+    elif current_card[0] == 'w':
+        if card[0] == current_card[1]:
+            return True
+    elif card[1:] == current_card[1:]:
+        return True
+
+    return False
+
+
+def choose_color(d4=False):
+    picking = True
+    while picking:
+        global screen
+        clock.tick(60)
+        el = pg.event.get()
+        for e in el:
+            if e.type == pg.QUIT:
+                if client:
+                    client.send(pickle.dumps(DISCONNECT_MESSAGE))
+                sys.exit()
+
+        back_rect = pg.Rect(0, 0, width//3, height//3)
+        back_rect.center = width//2, height//2
+        pg.draw.rect(screen, white, back_rect)
+
+        rect_list = []
+        color_list = ['Red', 'Green', 'Blue', 'Yellow']
+        for count, i in enumerate(color_list):
+            color_button = pg.Rect(0, 0, (width//3)//4-10, height//3-10)
+            color_button.left = back_rect.left+5+(((width//3)//4)*count)
+            color_button.centery = height//2
+            if i == 'Yellow':
+                color = smallFont.render(i, True, black)
+            else: color = smallFont.render(i, True, white)
+            color_rect = color.get_rect()
+            color_rect.center = color_button.center
+            pg.draw.rect(screen, i, color_button)
+            screen.blit(color, color_rect)
+            rect_list.append(color_button)
+
+        e, _, _ = pg.mouse.get_pressed()
+        if e == 1:
+            mous = pg.mouse.get_pos()
+            for c, x in enumerate(rect_list):
+                if x.collidepoint(mous):
+                    if color_list[c] == 'Red':
+                        if d4: return 'wr4'
+                        return 'wr'
+                    if color_list[c] == 'Blue':
+                        if d4: return 'wb4'
+                        return 'wb'
+                    if color_list[c] == 'Yello':
+                        if d4: return 'wy4'
+                        return 'wy'
+                    if color_list[c] == 'Green':
+                        if d4: return 'wg4'
+                        return 'wg'
+
+        pg.display.flip()
 
 
 while True:
@@ -210,7 +274,17 @@ while True:
                 for count, i in enumerate(card_rects):
                     if i.collidepoint(mouse):
                         try:
-                            current_card = hand[count]
+                            if not is_valid_move(hand[count], current_card):
+                                continue
+
+                            if hand[count][0] == 'w':
+                                if len(hand[count]) == 2:
+                                    choose_color(True)
+                                else:
+                                    current_card = choose_color()
+                            else:
+                                current_card = hand[count]
+                            print(current_card)
                             hand.remove(hand[count])
                             client.send(pickle.dumps([hand, current_card]))
                             hand, opponent_cards, current_card, turn = pickle.loads(client.recv(2048))
