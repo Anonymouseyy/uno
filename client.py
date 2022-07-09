@@ -47,10 +47,13 @@ def draw_hand(cards):
     ratio = 1.59
     max_w = 100
 
-    if width/len(cards) >= max_w:
+    if len(cards) == 0:
         w = max_w
     else:
-        w = width/len(cards)
+        if width/len(cards) >= max_w:
+            w = max_w
+        else:
+            w = width/len(cards)
 
     for i, card in enumerate(cards):
         if card[0] == "w":
@@ -105,7 +108,7 @@ def draw_current_card(card):
         if len(card) == 2:
             text = mediumFont.render('W', True, white)
         else:
-            text = mediumFont.render(f'{card[1:].capitalize()}', True, white)
+            text = mediumFont.render(f'W4', True, white)
         x = pg.Rect(0, 0, 145, 233.5)
     else:
         text = mediumFont.render(f'{card[1:].capitalize()}', True, black)
@@ -128,10 +131,13 @@ def draw_opponent_hand(hand):
     ratio = 1.59
     max_w = 100
 
-    if width/hand >= max_w:
+    if hand == 0:
         w = max_w
     else:
-        w = width/hand
+        if width/hand >= max_w:
+            w = max_w
+        else:
+            w = width/hand
 
     for i in range(hand):
         x = pg.Rect(0, 0, w-5, w*ratio-5)
@@ -205,7 +211,7 @@ def choose_color(d4=False):
                     if color_list[c] == 'Blue':
                         if d4: return 'wb4'
                         return 'wb'
-                    if color_list[c] == 'Yello':
+                    if color_list[c] == 'Yellow':
                         if d4: return 'wy4'
                         return 'wy'
                     if color_list[c] == 'Green':
@@ -250,8 +256,7 @@ while True:
                 try:
                     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                     client.connect(ADDR)
-                    hand, opponent_cards, current_card, player_number = pickle.loads(client.recv(2048))
-                    print(hand, opponent_cards, current_card)
+                    h, opponent_cards, current_card, player_number = pickle.loads(client.recv(2048))
                 except:
                     print('Connection Failed')
                     sys.exit()
@@ -259,36 +264,78 @@ while True:
     if game_started:
         try:
             client.send(pickle.dumps('GETDATA'))
-            hand, opponent_cards, current_card, turn = pickle.loads(client.recv(2048))
+            h, opponent_cards, current_card, turn = pickle.loads(client.recv(2048))
         except socket.error as e:
             print(e)
 
-        card_rects = draw_hand(hand)
+        card_rects = draw_hand(h)
         draw_current_card(current_card)
         draw_opponent_hand(opponent_cards)
 
+        turn_box = pg.Rect(0, 0, width / 5, height // 4)
         if turn == player_number:
+            turnt = mediumFont.render('Your Turn', True, black)
+        else:
+            turnt = mediumFont.render('Opponent Turn', True, black)
+        turn_rect = turnt.get_rect()
+        turn_box.center = width // 5, height//2
+        turn_rect.center = turn_box.center
+        pg.draw.rect(screen, white, turn_box)
+        screen.blit(turnt, turn_rect)
+
+        if opponent_cards == 0:
+            loss_box = pg.Rect(0, 0, width / 2, height // 2)
+            loss = largeFont.render('YOU LOST', True, black)
+            loss_rect = loss.get_rect()
+            loss_box.center = width//2, height//2
+            loss_rect.center = loss_box.center
+            pg.draw.rect(screen, white, loss_box)
+            screen.blit(loss, loss_rect)
+        elif len(h) == 0:
+            win_box = pg.Rect(0, 0, width / 2, height // 2)
+            win = largeFont.render('YOU WON', True, black)
+            win_rect = win.get_rect()
+            win_box.center = width//2, height//2
+            win_rect.center = win_box.center
+            pg.draw.rect(screen, white, win_box)
+            screen.blit(win, win_rect)
+
+        if turn == player_number:
+            draw_box = pg.Rect(0, 0, width / 5, height // 4)
+            draw = mediumFont.render('Draw Card', True, black)
+            draw_rect = draw.get_rect()
+            draw_box.center = width-(width // 5), height//2
+            draw_rect.center = draw_box.center
+            pg.draw.rect(screen, white, draw_box)
+            screen.blit(draw, draw_rect)
+
             click, _, _ = pg.mouse.get_pressed()
             if click == 1:
                 mouse = pg.mouse.get_pos()
                 for count, i in enumerate(card_rects):
                     if i.collidepoint(mouse):
                         try:
-                            if not is_valid_move(hand[count], current_card):
+                            if not is_valid_move(h[count], current_card):
                                 continue
 
-                            if hand[count][0] == 'w':
-                                if len(hand[count]) == 2:
-                                    choose_color(True)
+                            if h[count][0] == 'w':
+                                if len(h[count]) == 2:
+                                    current_card = choose_color(True)
                                 else:
                                     current_card = choose_color()
                             else:
-                                current_card = hand[count]
-                            print(current_card)
-                            hand.remove(hand[count])
-                            client.send(pickle.dumps([hand, current_card]))
-                            hand, opponent_cards, current_card, turn = pickle.loads(client.recv(2048))
+                                current_card = h[count]
+                            h.remove(h[count])
+                            client.send(pickle.dumps([h, current_card]))
+                            h, opponent_cards, current_card, turn = pickle.loads(client.recv(2048))
                         except socket.error as e:
                             print(e)
+
+                if draw_box.collidepoint(mouse):
+                    try:
+                        client.send(pickle.dumps([h, current_card]))
+                        h, opponent_cards, current_card, turn = pickle.loads(client.recv(2048))
+                    except socket.error as e:
+                        print(e)
 
     pg.display.flip()

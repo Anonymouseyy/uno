@@ -49,6 +49,15 @@ for i in range(max_players):
     hands.append(x)
 
 
+def add_cards(player, cards):
+    global uno_deck, hands
+
+    for _ in range(cards):
+        x = random.choice(uno_deck)
+        hands[player].append(x)
+        uno_deck.remove(x)
+
+
 def handle_client(conn, addr, player):
     global current_card, hands, turn
     print(f'[NEW CONNECTION] {addr} connected.')
@@ -62,12 +71,34 @@ def handle_client(conn, addr, player):
             elif data == 'GETDATA':
                 pass
             else:
-                uno_deck.append(current_card)
-                hands[player], current_card = data
-                if turn == 0:
-                    turn = 1
+                if current_card[0] == 'w':
+                    if len(current_card) == 3:
+                        uno_deck.append('w4')
+                    else:
+                        uno_deck.append('w')
+                else: uno_deck.append(current_card)
+                hand, current_card = data
+                if hands[player] == hand:
+                    add_cards(player, 1)
+
+                    if turn == 0:
+                        turn = 1
+                    else:
+                        turn = 0
                 else:
-                    turn = 0
+                    hands[player] = hand
+                    if current_card[1] == 's' or (current_card[1] == 'r' and not current_card[0] == 'w'):
+                        pass
+                    else:
+                        if turn == 0:
+                            turn = 1
+                        else:
+                            turn = 0
+
+                    if current_card[1:] == 'd2':
+                        add_cards(turn, 2)
+                    elif current_card[-1] == '4' and current_card[0] == 'w':
+                        add_cards(turn, 4)
 
             if not data:
                 print("Disconnected")
