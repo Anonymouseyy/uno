@@ -27,10 +27,10 @@ largeFont = pg.font.Font('Roboto-Black.ttf', 40)
 
 # Socket Variables
 HEADER = 64
-PORT = 5050
+PORT = 3389
 FORMAT = 'utf-8'
 DISCONNECT_MESSAGE = '!DISCONNECT'
-SERVER = socket.gethostbyname(socket.gethostname())
+SERVER = '35.235.71.200'
 ADDR = (SERVER, PORT)
 
 game_started = False
@@ -328,6 +328,7 @@ while True:
                             h.remove(h[count])
                             client.send(pickle.dumps([h, current_card]))
                             h, opponent_cards, current_card, turn = pickle.loads(client.recv(2048))
+                            time.sleep(0.2)
                         except socket.error as e:
                             print(e)
 
