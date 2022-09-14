@@ -27,10 +27,10 @@ largeFont = pg.font.Font('Roboto-Black.ttf', 40)
 
 # Socket Variables
 HEADER = 64
-PORT = 3389
+PORT = #insert port here
 FORMAT = 'utf-8'
 DISCONNECT_MESSAGE = '!DISCONNECT'
-SERVER = '35.235.71.200'
+SERVER = #insert server here
 ADDR = (SERVER, PORT)
 
 game_started = False
