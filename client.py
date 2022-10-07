@@ -17,6 +17,7 @@ yellow = (255, 255, 0)
 blue = (0, 0, 255)
 uno_card_colors = [red, green, yellow, blue]
 
+# Setting up display
 screen = pg.display.set_mode(size)
 pg.display.set_caption('Uno')
 
@@ -33,6 +34,7 @@ DISCONNECT_MESSAGE = '!DISCONNECT'
 SERVER = #insert server here
 ADDR = (SERVER, PORT)
 
+# Game variable
 game_started = False
 client = None
 current_card = None
@@ -42,11 +44,16 @@ turn = 0
 
 
 def draw_hand(cards):
+    '''
+    This function takes in a list of your cards and draws 
+    visual representations of them on the screen
+    '''
     global screen
     rect_list = []
     ratio = 1.59
     max_w = 100
 
+    # Figuring out what the width of the cards should be
     if len(cards) == 0:
         w = max_w
     else:
@@ -56,6 +63,7 @@ def draw_hand(cards):
             w = width/len(cards)
 
     for i, card in enumerate(cards):
+        # Setting the color of the card
         if card[0] == "w":
             color = black
         elif card[0] == "r":
@@ -67,6 +75,7 @@ def draw_hand(cards):
         elif card[0] == "y":
             color = yellow
 
+        # Creating the text for the card
         if color == black:
             if len(card) == 1:
                 text = mediumFont.render('W', True, white)
@@ -75,7 +84,8 @@ def draw_hand(cards):
         else:
             text = mediumFont.render(f'{card[1:].capitalize()}', True, black)
             x = pg.Rect(0, 0, w, w * ratio)
-
+        
+        # Creating the rectangle of the card
         text_rect = text.get_rect()
         x.center = (i*(w+5))+w//2+5, 550
         text_rect.center = x.center
@@ -84,17 +94,24 @@ def draw_hand(cards):
             y.center = x.center
             pg.draw.rect(screen, white, y)
 
+        # Drawing the rectangle onto the screen
         pg.draw.rect(screen, color, x)
         screen.blit(text, text_rect)
 
         rect_list.append(x)
 
+    # Returning the list of rect objects so we can detect card selection
     return rect_list
 
 
 def draw_current_card(card):
+    '''
+    This function takes in one singular card that is the current card
+    and draws it to the middle of the screen
+    '''
     global screen
 
+    # Setting the color of the card
     if card[0] == "r" or card[:2] == "wr":
         color = red
     elif card[0] == "b" or card[:2] == "wb":
@@ -104,6 +121,7 @@ def draw_current_card(card):
     elif card[0] == "y" or card[:2] == "wy":
         color = yellow
 
+    # Setting the text of the card
     if card[0] == 'w':
         if len(card) == 2:
             text = mediumFont.render('W', True, white)
@@ -114,6 +132,7 @@ def draw_current_card(card):
         text = mediumFont.render(f'{card[1:].capitalize()}', True, black)
         x = pg.Rect(0, 0, 150, 238.5)
 
+    # Creates the rect object
     text_rect = text.get_rect()
     x.center = width//2, height//2
     text_rect.center = x.center
@@ -122,15 +141,21 @@ def draw_current_card(card):
         y.center = x.center
         pg.draw.rect(screen, white, y)
 
+    # Draws the rect object to the screen
     pg.draw.rect(screen, color, x)
     screen.blit(text, text_rect)
 
 
 def draw_opponent_hand(hand):
+    '''
+    Takes in the number of cards the opponent has and
+    draws them to the top of the screen
+    '''
     global screen
     ratio = 1.59
     max_w = 100
 
+    # Sets the width of the card
     if hand == 0:
         w = max_w
     else:
@@ -140,22 +165,29 @@ def draw_opponent_hand(hand):
             w = width/hand
 
     for i in range(hand):
+        # Creating the text
         x = pg.Rect(0, 0, w-5, w*ratio-5)
         text = mediumFont.render('UNO', True, white)
 
+        # Creating the rectangle
         text_rect = text.get_rect()
         x.center = width-((i * (w + 5)) + w // 2 + 5), 80
         text_rect.center = x.center
 
+        # Getting the Y of the rectangle
         y = pg.Rect(0, 0, w, w*ratio)
         y.center = x.center
 
+        # Draws the cards onto the screen
         pg.draw.rect(screen, white, y)
         pg.draw.rect(screen, black, x)
         screen.blit(text, text_rect)
 
 
 def is_valid_move(card, current_card):
+    '''
+    This function checks if the card can be placed
+    '''
     if card[0] == 'w':
         return True
     elif card[0] == current_card[0]:
